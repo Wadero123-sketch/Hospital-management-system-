@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: hospital_db
+    environment:
+      POSTGRES_USER: hospital_user
+      POSTGRES_PASSWORD: hospital_password
+      POSTGRES_DB: hospital_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hospital_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hospital_backend
+    command: python -m app.main
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      DATABASE_URL: postgresql://hospital_user:hospital_password@postgres:5432/hospital_db
+      JWT_SECRET_KEY: your-secret-key-here
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hospital_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
