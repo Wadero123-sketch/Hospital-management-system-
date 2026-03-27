@@ -1,5 +1,4 @@
 # Hospital-management-system
-# Hospital Management System
 
 A comprehensive full-stack hospital management system built with Python Flask, SQLAlchemy, PostgreSQL, and React.
 
